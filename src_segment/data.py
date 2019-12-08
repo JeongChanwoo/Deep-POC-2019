@@ -11,12 +11,13 @@ def df_gen(json_location):
     coco = COCO(json_location)
     cats = coco.loadCats(coco.getCatIds())
     nms=[cat['name'] for cat in cats]
+    colors = [cat['color'] for cat in cats]
     print('COCO categories: \n{}\n'.format(' '.join(nms)))
 
     nms_super = set([cat['supercategory'] for cat in cats])
     print('COCO supercategories: \n{}'.format(' '.join(nms_super)))
     
-    column_names = ['ImageId','size']
+    column_names = ['ImageId','size','colors']
 #     print
     column_names = column_names + nms
     train_df = pd.DataFrame(columns=column_names)
@@ -35,6 +36,7 @@ def df_gen(json_location):
 #         break()
         rles['ImageId']  = img[0]['file_name']
         rles['size'] = [img[0]['height'], img[0]['width']]
+        rles['colors'] = colors
 #         print(anns)
 #         break
         for ann_idx, ann in enumerate(anns):
