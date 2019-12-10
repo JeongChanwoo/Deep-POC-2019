@@ -4,19 +4,34 @@ from pycocotools.mask import encode, decode, area, toBbox
 from PIL import Image
 import os
 import sys
+import ast
 
 def rle2mask(rle, input_shape, resize_shape = None):
     rle_dict = dict.fromkeys(['size', 'counts'])
-    rle_dict['size'] = input_shape
-    rle_dict['counts'] = rle
-#     print(rle_dict)
+    # print('%%%%%')
+    # print(input_shape)
+    # rle(1400,2100)
+    rle_dict['size'] = [input_shape[0], input_shape[1]] # 2100, 1400
+    rle_dict['counts'] = rle # 2100, 1400
+    # print(rle_dict)
     try:
+        # 2100, 1400 -> 2100,1400 decoding
         mask = decode(rle_dict)
+        # print(mask.shape)
+        # mask = cv2.resize(decode(rle_dict).astype(np.uint8), (input_shape[1], input_shape[0]))
+        # print(mask)
+        # print(mask)
     except:
-        mask= np.zeros( input_shape ).astype(np.uint8)
+        # print('????')
+        # print(input_shape)
+        
+        # 2100, 1400
+        mask= np.zeros( (int(input_shape[0]), int(input_shape[1])) ).astype(np.uint8)
+        # print(mask)
 #     print(resize_shape)
         
     if resize_shape:
+        # 512, 256
         mask = cv2.resize(mask, resize_shape)
     return mask
 
@@ -100,14 +115,14 @@ def masks_reduce(masks, mask_thres):
     return reduced_mask
 
 
-def predict_resize(msks, proba=[0.9, 0.9, 0.9, 0.9], pad_size=[10,10,10,10], reduce_size = [10000,10000,10000,10000], convex = [False,False,False,False], origin_img_size = (1400,2100), label_names =['Fish','Flower', 'Gravel', 'Sugar']):
+def predict_resize(msks, proba=[0.9, 0.9, 0.9, 0.9], pad_size=[10,10,10,10], reduce_size = [10000,10000,10000,10000], convex = [False,False,False,False], resize_shape = (512,256), label_names =['Fish','Flower', 'Gravel', 'Sugar']):
     
-    resized_msks = np.zeros((msks.shape[0],origin_img_size[0],origin_img_size[1],len(label_names)),dtype=np.int8)
+    resized_msks = np.zeros((msks.shape[0],msks.shape[1],msks.shape[2],len(label_names)),dtype=np.int8)
     for i in range(len(msks)):
         for j, label in enumerate(label_names):
-            msk = msks[i , : , : , j]*100
-            msk = np.array(msk >=proba[j]*100, dtype = np.uint8)
-            msk = cv2.resize(msk,(origin_img_size[1],origin_img_size[0]), interpolation = cv2.INTER_LINEAR)
+            msk = msks[i , : , : , j]
+            msk = np.array(msk >=proba[j], dtype = np.uint8)
+            # msk = cv2.resize(msk,(origin_img_size[1],origin_img_size[0]), interpolation = cv2.INTER_LINEAR)
             msk = mask2pad(msk, pad_size[j])
             msk = masks_reduce(msk, reduce_size[j])
             
@@ -118,6 +133,24 @@ def predict_resize(msks, proba=[0.9, 0.9, 0.9, 0.9], pad_size=[10,10,10,10], red
             
             
     return resized_msks
+
+
+
+# def predict_resize(msks, proba=[0.9, 0.9, 0.9, 0.9], pad =False, pad_size=[10,10,10,10], reduce = False, reduce_size = [10000,10000,10000,10000], convex = [False,False,False,False]):
+    
+#     resized_msks = np.zeros((msks.shape[0],350,525,4),dtype=np.int8)
+#     for i in range(len(msks)):
+#         for j, label in enumerate(['Fish', 'Flower', 'Gravel', 'Sugar']):
+#             msk = msks[i , : , : , j]
+#             msk = np.array(msk >=proba[j], dtype = np.uint8)
+#             msk = cv2.resize(msk,(525,350), interpolation = cv2.INTER_LINEAR)
+#             if pad:
+#                 msk = mask2pad(msk, pad_size[j])
+#             if reduce:
+#                 msk = masks_reduce(msk, reduce_size[j])
+#             if convex[j]==True:
+#                 msk = contour_convexHull(msk.astype(np.uint8))
+#             resized_msks[i, : , : , j] = msk
 
 
 def hex2rgb(hex_code):
@@ -131,8 +164,13 @@ def rle_mask2img(df_row, img_path):
     img = os.path.join(img_path , df_row['ImageId'])
     # print(img)
     # sys.exit()
+    colors = ast.literal_eval(df_row['colors'])
+    origin_size = ast.literal_eval(df_row['size'])
     img = cv2.imread(img)
-    colors = df_row['colors']
+    
+    # (1400,2100)
+    img = cv2.resize(img, (origin_size[0], origin_size[1]))
+    print(img.shape)
     # print(colors)
     
     for l_idx, label in enumerate(df_row.index[3:]):
@@ -140,8 +178,14 @@ def rle_mask2img(df_row, img_path):
         rgb_code = list(hex2rgb(hex_code))
         # rgb_code = 
         print(df_row[label])
-        msk = rle2mask(df_row[label], df_row['size'])
-        msk = mask2pad(msk, pad=3)
+        
+        # 2100, 1400
+        msk = rle2mask(df_row[label], input_shape =  origin_size)
+        # 1400, 2100
+        msk = cv2.resize(msk, (origin_size[0],origin_size[1]))
+        print('!!!!')
+        print(msk.shape)
+        msk = mask2pad(msk, pad=2)
         msk = mask2contour(msk, width =2)
         # print(msk)
         # print(msk.shape)
@@ -151,8 +195,9 @@ def rle_mask2img(df_row, img_path):
         for c_idx , color in enumerate(rgb_code):
             # print(color)
             img[msk==1, c_idx] = color
-        
+    # 2100, 1400    
     img = Image.fromarray(img)
+    print(img.size)
     return img
         
     

@@ -17,6 +17,7 @@ import albumentations as albu
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import cv2
+import ast
 
 from numpy.random import seed
 seed(42)
@@ -198,8 +199,9 @@ def compile_and_train(model,train_batches,valid_batches, epochs, pretrained_weig
         
         
 def main():
-    
-    df = df_gen(FLAGS.json_path)
+    print(FLAGS.resize_shape)
+    # sys.exit()
+    df = df_gen(FLAGS.json_path) # size(2100,1400) rle(1400,2100)
     print(df.iloc[0])
     img_path = '/'.join(FLAGS.json_path.split('/')[:-2])
     print(df.shape)
@@ -214,7 +216,10 @@ def main():
     train_idx, valid_idx = train_split(df)
     print("Train : {}\n validataion : {}".format(len(train_idx), len(valid_idx)))
     
-    
+    # In : size(2100,1400) rle(2100,1400)
+    # out :
+    # Img  - resize_size(512,256 ) - > resize(256,512) -> (512,256)
+    # Mask  - resize_size(512,256 ) - > resize(256,512) -> (512,256)
     train_batches = SegmentDataGenerator(df.iloc[train_idx], batch_size = FLAGS.batch_size, 
                                   subset='train', shuffle=True,
                                  preprocess = img_preprocess, augmentation = argument,
@@ -225,6 +230,11 @@ def main():
                                  preprocess = img_preprocess, augmentation = None,
                                  resize_shape = (FLAGS.resize_shape[0],FLAGS.resize_shape[1]), train_path = img_path)
     
+    print(valid_batches[0][0].shape)
+    print(valid_batches[0][1].shape)
+    
+    # In : (512,256, 3, 4)
+    # Out : (512,256, 3, 4)
     seg_model = get_model(label_counts = len(df.columns[3:].tolist()), input_shape = (FLAGS.resize_shape[0],FLAGS.resize_shape[1],3))
     
     
@@ -234,6 +244,8 @@ def main():
     
     print(valid_batches[0][0].shape)
     print(valid_batches[0][1].shape)
+    
+    # sys.exit()
     
     
     ### path_name set

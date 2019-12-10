@@ -16,11 +16,13 @@ import albumentations as albu
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
 import cv2
+import ast
 
 from numpy.random import seed
 seed(42)
 from tensorflow import set_random_seed
 set_random_seed(42)
+import ast
 
 
 class SegmentDataGenerator(keras.utils.Sequence):
@@ -78,10 +80,18 @@ class SegmentDataGenerator(keras.utils.Sequence):
             if self.subset =='train':
                 # print(self.df.columns[2:].to_list())
                 for j,label in enumerate(self.df.columns[3:].to_list()):
-                    rle = self.df[label].iloc[indexes[i]]
+                    try:
+                        rle = ast.literal_eval(self.df[label].iloc[indexes[i]])
+                    except:
+                        rle = self.df[label].iloc[indexes[i]]
 #                     print(rle)
-                    shape = self.df['size'].iloc[indexes[i]]
-                    y[i,:,:,j] = rle2mask(rle, shape, resize_shape = self.resize_shape )
+                    try:
+                        shape = ast.literal_eval(self.df['size'].iloc[indexes[i]])
+                    except:
+                        shape = self.df['size'].iloc[indexes[i]]
+                    # print(shape)
+                    # print(rle)
+                    y[i,:,:,j] = rle2mask(rle, shape, resize_shape = (self.resize_shape[1], self.resize_shape[0]) )
                     
             if not self.augmentation is None:
                 x[i,], y[i,] = self.__random_transform__(x[i,], y[i,])

@@ -2,8 +2,10 @@ import pandas as pd
 import numpy as np
 import os
 from pycocotools.coco import COCO
+from pycocotools.mask import encode, decode, area, toBbox
 import json
 from tqdm import tqdm
+import cv2
 
 def df_gen(json_location):
     
@@ -35,13 +37,18 @@ def df_gen(json_location):
 #         print(anns)
 #         break()
         rles['ImageId']  = img[0]['file_name']
-        rles['size'] = [img[0]['height'], img[0]['width']]
+        rles['size'] = [img[0]['width'], img[0]['height']] # 2100, 1400
         rles['colors'] = colors
 #         print(anns)
 #         break
         for ann_idx, ann in enumerate(anns):
             try:
-                rle_ = coco.annToRLE(ann)
+                # (1400, 2100)
+                mask_ = coco.annToMask(ann)
+                # (2100, 1400)
+                mask_ = np.asfortranarray(cv2.resize(mask_, (rles['size'][1], rles['size'][0])))
+                # rle (2100, 1400)
+                rle_ = encode(mask_)
 #                 print(ann['category_id'])
                 cat_id = list(filter(lambda x : x['id']==ann['category_id'], cats))[0]['name']
 #                 print(cat_id)
@@ -62,6 +69,6 @@ def df_save(save_path, df):
     print('{}_save'.format(save_path))
 
 if __name__ == '__main__':
-    coco_path = './coco-annotator/datasets/cloud_segment_test/'
+    coco_path = '../coco-annotator/datasets/cloud_segment_test/.exports/coco-1574824539.779883.json'
     df = df_gen(coco_path)
     print(df.head())

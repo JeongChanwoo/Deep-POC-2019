@@ -1,5 +1,7 @@
 from keras import backend as K
 from keras.losses import binary_crossentropy
+import numpy as np
+from tqdm import tqdm
 
 def dice_coef(y_true, y_pred):
     y_true_f = K.flatten(y_true)
@@ -47,3 +49,37 @@ def dice_channel_label(probability, truth):
 #         round(mean_channels[2],5 ), 
 #         round(mean_channels[3],5 )))
     return mean_dice_channel
+
+
+
+def dice_channel_torch(probability, truth):
+    batch_size = truth.shape[0]
+    channel_num = truth.shape[-1]
+    mean_dice_channel = 0.
+    
+    
+    mean_channels = [0.]* channel_num
+
+    for i in tqdm(range(batch_size)):
+        for j in range(channel_num):
+            channel_dice = dice_single_channel(probability[i, :,:,j], truth[i, :, :, j])
+            mean_dice_channel += channel_dice/(batch_size * channel_num)
+            
+            mean_channels[j] += channel_dice/batch_size
+#     print(channel_num)
+    score_text = ' : {}, '.join(['channnel_{}'.format(k + 1) for k in range(channel_num)]) + ' : {}'
+#     print(score_text)
+    score = np.round(np.array(mean_channels), 5)
+    total_score = np.round(np.append(mean_dice_channel, np.array(mean_channels)),5)
+    score_text = score_text.format(*score)
+    print("Mean_dice_channel : {} ".format(total_score[0]))
+    print(score_text)
+
+    return total_score
+
+
+def dice_single_channel(probability, truth,  eps = 1E-9):
+    p = probability.astype(np.float32)
+    t = truth.astype(np.float32)
+    dice = (2.0 * (p * t).sum() + eps)/ (p.sum() + t.sum() + eps)
+    return dice
