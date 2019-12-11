@@ -105,8 +105,8 @@ def batch_predict(model, test_df,label_names ,pred_batch_size = 10,proba = [0.5,
                                        convex= convex
                                      )
         print(batch_preds_re.shape)
-        # np.save('../test.npy',batch_preds_re)
-        # sys.exit()
+        np.save('../test.npy',batch_preds_re)
+        sys.exit()
         
         for j, b in enumerate(batch_idx):
             filename = test_df['ImageId'].iloc[b]

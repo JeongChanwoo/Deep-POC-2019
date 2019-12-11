@@ -48,10 +48,11 @@ def predict_post_grid(msks, proba = 0.9, pad = False, pad_size = 10, reduce = Fa
         # msk = cv2.resize(msk,(resize_shape[1],resize_shape[0]), interpolation = cv2.INTER_LINEAR)
 
         msk = mask2pad(msk, pad_size)
+        msk = contour_convexHull(msk.astype(np.uint8))
 
         msk = masks_reduce(msk, reduce_size)
 
-        msk = contour_convexHull(msk.astype(np.uint8))
+        
         
         resized_msks[i, : , :] = msk
     return resized_msks
@@ -258,12 +259,13 @@ def post_process_main():
         valid_true_img_resize[idx, :, :, :] = valid_generator_true[idx][1]
     
     # print('$$$$$')
-    
+    np.save('../valid_true.npy',valid_true_img_resize)
     # In : (512,256,3)
     # Out : (512,256,4)
     valid_pred_img = loaded_model.predict_generator(valid_generator_true, verbose=1)
+    np.save('../valid_pred.npy',valid_pred_img)
     ### Need Check
-    valid_pred_img_proba = np.array(valid_pred_img >0.5,dtype = np.uint8)
+    valid_pred_img_proba = np.array(valid_pred_img >=0.5,dtype = np.uint8)
     
     print("valid_true : " + str(valid_true_img_resize.shape), 
           "valid_pred : " + str(valid_pred_img.shape))
@@ -279,7 +281,9 @@ def post_process_main():
     # In : (40,512,256,4)
     # Out : (40,512,256,4)
     # Post Processing
-    post_matrix, post_nps = post_optimi(valid_true_img_resize,valid_pred_img, labels = labels )
+    post_matrix, post_nps = post_optimi(valid_true_img_resize,valid_pred_img, labels = labels, resize_shape = (FLAGS.resize_shape[0],FLAGS.resize_shape[1]) )
+    
+    np.save('../valid_pred_post.npy',post_nps)
     
     print(" Post_processed validation dice coefficient scores ")
     processed_valid_dice_scores = dice_channel_torch(post_nps, valid_true_img_resize)

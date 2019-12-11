@@ -124,10 +124,11 @@ def predict_resize(msks, proba=[0.9, 0.9, 0.9, 0.9], pad_size=[10,10,10,10], red
             msk = np.array(msk >=proba[j], dtype = np.uint8)
             # msk = cv2.resize(msk,(origin_img_size[1],origin_img_size[0]), interpolation = cv2.INTER_LINEAR)
             msk = mask2pad(msk, pad_size[j])
-            msk = masks_reduce(msk, reduce_size[j])
-            
             if convex[j]==True:
                 msk = contour_convexHull(msk.astype(np.uint8))
+            msk = masks_reduce(msk, reduce_size[j])
+            
+            
             resized_msks[i, : , : , j] = msk
             
             

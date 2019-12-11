@@ -108,3 +108,4 @@ venv.bak/
 coco-annotator/
 res/
 cocoapi/
+coco_images/
