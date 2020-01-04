@@ -105,11 +105,6 @@ venv.bak/
 
 
 #ginore directory
-result/cloud_segment_test/*
-result/check/
-result/segment/
-result/train/
-deploy/KerasSegmentationService/*
 image/
 cocoapi/
 coco_images/
