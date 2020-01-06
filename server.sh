@@ -30,7 +30,7 @@ echo $DIR
 # cd $deploy_service_path
 
 
-service_version='cloud_v_80'
+service_version='cloud_v_90'
 service_path='deploy/KerasSegmentationService/'$service_version'/'
 service_abs_path=$DIR'/'$service_path
 # echo 'YYYY'

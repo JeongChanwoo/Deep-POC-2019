@@ -14,7 +14,7 @@ img_path="/coco-annotator/datasets/cloud_segment_test"
 
 ### set up
 img_dir_name="cloud_segment_test"
-model_name="cloud_v_80"
+model_name="cloud_v_90"
 epoch=30
 batch_size=4
 task="segment/"
