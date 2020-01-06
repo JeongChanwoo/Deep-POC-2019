@@ -83,6 +83,7 @@ $ sh annotator.sh
 1. 모델 학습 설정 셋팅
 <br>모델 학습 셋팅은 trainer.sh 를 통해 이뤄진다.
 모델 학습을 위한 셋팅에서 사용자가 입력하는 영역은 **json_path, img_path, img_dir_name, model_name, epoch** 이다.</br>
+
 | variable | 설명 | 예시 |
 | :--------- | :---------: | ---------: |
 | json_path | coco-annotator를 통해 생성된 json 파일의 경로(가장 최근 파일) | "coco-annotator/datasets/human_dog_research/.exports/coco-1513442.94673.json" |
